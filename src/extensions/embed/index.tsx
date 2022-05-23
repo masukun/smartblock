@@ -61,6 +61,7 @@ export default class Embed extends Extension {
         }
       ],
       toDOM: node => {
+        console.log(node.attrs.src)
         if (node.attrs.src.indexOf('youtube') !== -1) {
           const { src } = node.attrs
           let youtubeId = ''
@@ -96,6 +97,65 @@ export default class Embed extends Extension {
               ]
             ]
           }
+        } else if (node.attrs.src.indexOf('maps') !== -1) {
+          class GoogleMap {
+            embed: string;
+            place: string;
+            latitude: string;
+            longitude: string;
+            zoom: string;
+
+            constructor(embed: string, place: string, latitude: string, longitude: string, zoom: string) {
+              this.embed = embed;
+              this.place = place;
+              this.latitude = latitude;
+              this.longitude = longitude;
+              this.zoom = zoom;
+            }
+
+            getUrl() {
+              let url: string = `https://www.google.com/maps/embed/v1/${this.embed}?q=${this.place}&center=${this.latitude},${this.longitude}&zoom=${this.zoom}&key=YourAPIKey`;
+              return url;
+            }
+          }
+          const FirstStringLatitude: number = node.attrs.src.indexOf('/@');
+          const EndStringLatitude: number = node.attrs.src.indexOf(',', FirstStringLatitude + 2);
+          const latitude: string = node.attrs.src.slice(FirstStringLatitude + 2, EndStringLatitude);
+          //経度取得
+          const EndStringLongitude: number = node.attrs.src.indexOf(',', EndStringLatitude + 1);
+          const longitude: string = node.attrs.src.slice(EndStringLatitude + 1, EndStringLongitude);
+          //ズーム値取得
+          const EndStringZoom: number = node.attrs.src.indexOf('z', EndStringLongitude + 1);
+          const zoom: string = node.attrs.src.slice(EndStringLongitude + 1, EndStringZoom + 1);
+          //検索名取得
+          const FirstStringPlaceName: number = node.attrs.src.lastIndexOf('/', FirstStringLatitude - 1);
+          const placeName: string = node.attrs.src.slice(FirstStringPlaceName + 1, FirstStringLatitude);
+          //embed取得
+          const FirstStringEmbed: number = node.attrs.src.lastIndexOf('/', FirstStringPlaceName - 1);
+          const embed: string = node.attrs.src.slice(FirstStringEmbed + 1, FirstStringPlaceName);
+          //取得した情報を渡したクラスを追加
+          const urlInfoArray: GoogleMap = new GoogleMap(embed, placeName, latitude, longitude, zoom);
+          //理想のurlに書き換えるメソッドに渡す
+          const necessaryUrl: string = urlInfoArray.getUrl();
+          return [
+            'div',
+            {
+              contenteditable: true,
+              class: 'youtube-frame-wrap'
+            },
+            [
+              'div',
+              {
+                class: 'youtube-frame'
+              },
+              [
+                'iframe',
+                {
+                  src: necessaryUrl
+                }
+              ]
+            ]
+          ]
         }
         return [
           'div',
